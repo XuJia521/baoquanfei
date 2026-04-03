@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>保全费计算器</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", sans-serif;
+    background: #0f0f1a;
+    color: #e8e8f0;
+    min-height: 100vh;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .header {
+    text-align: center;
+    padding: 48px 20px 24px;
+  }
+
+  .header .icon {
+    width: 56px;
+    height: 56px;
+    margin: 0 auto 16px;
+  }
+
+  .header h1 {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: #fff;
+  }
+
+  .header .subtitle {
+    font-size: 13px;
+    color: #8888a0;
+    margin-top: 6px;
+  }
+
+  .card {
+    background: #1a1a2e;
+    border-radius: 20px;
+    margin: 8px 16px 0;
+    padding: 28px 20px 24px;
+    width: calc(100% - 32px);
+    max-width: 400px;
+  }
+
+  .field-group {
+    margin-bottom: 24px;
+  }
+
+  .field-group:last-of-type {
+    margin-bottom: 0;
+  }
+
+  label {
+    display: block;
+    font-size: 15px;
+    font-weight: 600;
+    color: #c0c0d0;
+    margin-bottom: 10px;
+  }
+
+  label .required {
+    color: #a855f7;
+    margin-left: 4px;
+  }
+
+  .select-wrapper {
+    position: relative;
+  }
+
+  select {
+    width: 100%;
+    padding: 14px 16px;
+    background: #252540;
+    border: 1.5px solid #333355;
+    border-radius: 12px;
+    color: #e8e8f0;
+    font-size: 15px;
+    appearance: none;
+    -webkit-appearance: none;
+    outline: none;
+    cursor: pointer;
+  }
+
+  .select-wrapper::after {
+    content: "▾";
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #8888a0;
+    pointer-events: none;
+    font-size: 14px;
+  }
+
+  select:focus {
+    border-color: #7c3aed;
+  }
+
+  input[type="text"] {
+    width: 100%;
+    padding: 14px 16px;
+    background: #252540;
+    border: 1.5px solid #333355;
+    border-radius: 12px;
+    color: #e8e8f0;
+    font-size: 15px;
+    outline: none;
+  }
+
+  input[type="text"]::placeholder {
+    color: #555570;
+  }
+
+  input[type="text"]:focus {
+    border-color: #7c3aed;
+  }
+
+  .btn {
+    width: 100%;
+    padding: 16px;
+    border: none;
+    border-radius: 14px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(135deg, #7c3aed, #6d28d9);
+    color: #fff;
+    margin-top: 28px;
+    transition: opacity 0.2s;
+  }
+
+  .btn:active {
+    opacity: 0.85;
+  }
+
+  .result-card {
+    background: #1a1a2e;
+    border-radius: 20px;
+    margin: 12px 16px 0;
+    padding: 24px 20px;
+    width: calc(100% - 32px);
+    max-width: 400px;
+    display: none;
+  }
+
+  .result-card.show {
+    display: block;
+    animation: fadeUp 0.3s ease-out;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .result-title {
+    font-size: 13px;
+    color: #8888a0;
+    text-align: center;
+    margin-bottom: 8px;
+  }
+
+  .result-amount {
+    font-size: 36px;
+    font-weight: 700;
+    text-align: center;
+    color: #a78bfa;
+  }
+
+  .result-amount .unit {
+    font-size: 18px;
+    font-weight: 500;
+    color: #8888a0;
+    margin-left: 4px;
+  }
+
+  .result-detail {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #252540;
+  }
+
+  .detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    font-size: 13px;
+    color: #8888a0;
+  }
+
+  .detail-row .val {
+    color: #c0c0d0;
+    font-weight: 500;
+  }
+
+  .footer {
+    text-align: center;
+    padding: 20px 16px 40px;
+    font-size: 11px;
+    color: #555570;
+    line-height: 1.6;
+  }
+
+  .error-msg {
+    color: #f87171;
+    font-size: 12px;
+    margin-top: 6px;
+    display: none;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <svg class="icon" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M28 6L8 16v4h40v-4L28 6z" fill="#a78bfa"/>
+    <rect x="12" y="22" width="4" height="20" rx="1" fill="#7c3aed"/>
+    <rect x="22" y="22" width="4" height="20" rx="1" fill="#7c3aed"/>
+    <rect x="30" y="22" width="4" height="20" rx="1" fill="#7c3aed"/>
+    <rect x="40" y="22" width="4" height="20" rx="1" fill="#7c3aed"/>
+    <rect x="6" y="44" width="44" height="5" rx="2" fill="#a78bfa"/>
+    <circle cx="28" cy="13" r="3" fill="#1a1a2e"/>
+  </svg>
+  <h1>保全费计算器</h1>
+  <div class="subtitle">依据《诉讼费用交纳办法》</div>
+</div>
+
+<div class="card">
+  <div class="field-group">
+    <label>保全类型 <span class="required">*</span></label>
+    <div class="select-wrapper">
+      <select id="preservationType">
+        <option value="property">财产保全</option>
+        <option value="conduct">行为保全</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="field-group" id="amountGroup">
+    <label>保全金额（元）</label>
+    <input type="text" id="amount" inputmode="decimal" placeholder="请输入保全金额">
+    <div class="error-msg" id="errorMsg">请输入有效金额</div>
+  </div>
+
+  <button class="btn" onclick="calculate()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="10" y2="10"/><line x1="14" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="10" y2="14"/><line x1="14" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="10" y2="18"/><line x1="14" y1="18" x2="16" y2="18"/></svg>
+    计算保全费
+  </button>
+</div>
+
+<div class="result-card" id="resultCard">
+  <div class="result-title">应交纳保全费</div>
+  <div class="result-amount"><span id="resultFee">0</span><span class="unit">元</span></div>
+  <div class="result-detail">
+    <div class="detail-row">
+      <span>保全类型</span>
+      <span class="val" id="detailType">—</span>
+    </div>
+    <div class="detail-row" id="detailAmountRow">
+      <span>保全金额</span>
+      <span class="val" id="detailAmount">—</span>
+    </div>
+    <div class="detail-row">
+      <span>计算依据</span>
+      <span class="val" id="detailBasis">—</span>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  依据《诉讼费用交纳办法》（国务院令第481号）<br>
+  第十四条 · 保全费最高不超过5000元
+</div>
+
+<script>
+const typeSelect = document.getElementById('preservationType');
+const amountGroup = document.getElementById('amountGroup');
+const amountInput = document.getElementById('amount');
+const errorMsg = document.getElementById('errorMsg');
+const resultCard = document.getElementById('resultCard');
+
+typeSelect.addEventListener('change', function() {
+  if (this.value === 'conduct') {
+    amountGroup.style.display = 'none';
+  } else {
+    amountGroup.style.display = 'block';
+  }
+  resultCard.classList.remove('show');
+});
+
+// 格式化输入金额
+amountInput.addEventListener('input', function() {
+  errorMsg.style.display = 'none';
+  let v = this.value.replace(/[^\d.]/g, '');
+  // 只保留第一个小数点
+  const parts = v.split('.');
+  if (parts.length > 2) {
+    v = parts[0] + '.' + parts.slice(1).join('');
+  }
+  this.value = v;
+});
+
+function calculate() {
+  const type = typeSelect.value;
+  
+  if (type === 'conduct') {
+    // 行为保全：每件30元
+    showResult({
+      fee: 30,
+      type: '行为保全',
+      amount: null,
+      basis: '每件30元'
+    });
+    return;
+  }
+
+  // 财产保全
+  const raw = amountInput.value.trim();
+  if (!raw || isNaN(parseFloat(raw)) || parseFloat(raw) < 0) {
+    errorMsg.style.display = 'block';
+    return;
+  }
+
+  const amount = parseFloat(raw);
+  let fee = 0;
+  let basis = '';
+
+  if (amount <= 1000) {
+    fee = 30;
+    basis = '≤1000元，每件30元';
+  } else if (amount <= 100000) {
+    fee = amount * 0.01;
+    basis = '1000-10万，按1%';
+  } else {
+    fee = 100000 * 0.01 + (amount - 100000) * 0.005;
+    basis = '超10万部分按0.5%';
+  }
+
+  // 最高5000元
+  if (fee > 5000) {
+    fee = 5000;
+    basis += '（上限5000元）';
+  }
+
+  fee = Math.ceil(fee); // 向上取整
+
+  showResult({
+    fee: fee,
+    type: '财产保全',
+    amount: amount,
+    basis: basis
+  });
+}
+
+function showResult(data) {
+  document.getElementById('resultFee').textContent = data.fee.toLocaleString();
+  document.getElementById('detailType').textContent = data.type;
+  
+  const amountRow = document.getElementById('detailAmountRow');
+  if (data.amount !== null) {
+    amountRow.style.display = 'flex';
+    document.getElementById('detailAmount').textContent = formatMoney(data.amount) + ' 元';
+  } else {
+    amountRow.style.display = 'none';
+  }
+  
+  document.getElementById('detailBasis').textContent = data.basis;
+  resultCard.classList.remove('show');
+  void resultCard.offsetWidth; // trigger reflow
+  resultCard.classList.add('show');
+}
+
+function formatMoney(n) {
+  if (n >= 100000000) return (n / 100000000).toFixed(2) + '亿';
+  if (n >= 10000) return (n / 10000).toFixed(2) + '万';
+  return n.toLocaleString();
+}
+</script>
+</body>
+</html>
